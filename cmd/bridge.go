@@ -57,6 +57,16 @@ func bridgePipe(clientConn net.Conn) {
 		return
 	}
 
-	go transfer(serverConn, clientConn)
-	go transfer(clientConn, serverConn)
+	// 统一关闭
+	done := make(chan bool, 2)
+	go func() {
+		defer serverConn.Close()
+		defer clientConn.Close()
+		transfer(serverConn, clientConn, done)
+	}()
+	go func() {
+		defer serverConn.Close()
+		defer clientConn.Close()
+		transfer(clientConn, serverConn, done)
+	}()
 }

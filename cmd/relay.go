@@ -87,6 +87,17 @@ func handleHttps(w http.ResponseWriter, r *http.Request) {
 		log.Printf("[sys] hijack error:%s \n", err.Error())
 		http.Error(w, "[http] hijack error:"+err.Error(), http.StatusServiceUnavailable)
 	}
-	go transfer(destConn, clientConn)
-	go transfer(clientConn, destConn)
+
+	// 统一关闭
+	done := make(chan bool, 2)
+	go func() {
+		defer destConn.Close()
+		defer clientConn.Close()
+		transfer(destConn, clientConn, done)
+	}()
+	go func() {
+		defer destConn.Close()
+		defer clientConn.Close()
+		transfer(clientConn, destConn, done)
+	}()
 }

@@ -7,10 +7,9 @@ import (
 	"strings"
 )
 
-func transfer(destination io.WriteCloser, source io.ReadCloser) {
-	defer destination.Close()
-	defer source.Close()
+func transfer(destination io.Writer, source io.Reader, done chan<- bool) {
 	io.Copy(destination, source)
+	done <- true
 }
 
 func showLocalIpv4s() {
