@@ -12,11 +12,17 @@
 + 命令：
 
 ```shell
-# 1. 代理转发（默认端口：8080）
+# 代理转发（默认端口：8080）
 proxy relay
 
-# 2. 代理转发，指定端口
+# 代理转发，指定端口
 proxy relay --port 8000
+
+# 代理转发，指定端口、证书
+proxy relay --port 8000 --cert server.crt --key server.key
+
+# 自建证书的生成命令
+openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 -nodes -subj "/CN=IP"
 ```
 
 ## bridge (桥接转发)
