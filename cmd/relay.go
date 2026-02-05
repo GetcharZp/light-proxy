@@ -26,6 +26,7 @@ func NewRelayCommand() *cobra.Command {
 			port, _ := cmd.Flags().GetString("port")
 			cert, _ := cmd.Flags().GetString("cert")
 			key, _ := cmd.Flags().GetString("key")
+			proxyAuthToken, _ = cmd.Flags().GetString("auth")
 			relay(port, cert, key)
 		},
 	}
@@ -33,6 +34,7 @@ func NewRelayCommand() *cobra.Command {
 	cmd.Flags().StringP("port", "p", "8080", "proxy port")
 	cmd.Flags().String("cert", "", "path to cert file (enable HTTPS proxy)")
 	cmd.Flags().String("key", "", "path to key file (enable HTTPS proxy)")
+	cmd.Flags().String("auth", "", "single token for proxy authentication")
 
 	return cmd
 }
@@ -41,6 +43,11 @@ func relay(port, cert, key string) {
 	server := &http.Server{
 		Addr: ":" + port,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !authenticate(w, r) {
+				log.Printf("[warn] auth failed from %s \n", r.RemoteAddr)
+				return
+			}
+
 			if r.Method == http.MethodConnect {
 				handleHttps(w, r)
 			} else {
