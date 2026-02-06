@@ -7,6 +7,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 	"log"
 	"net/url"
+	"strings"
 )
 
 func configClear() {
@@ -33,11 +34,25 @@ func configClear() {
 
 func configSet(domain string) {
 	host := ""
-	u, err := url.Parse(domain)
-	if err != nil {
-		host = domain
+	protocol := ""
+	if strings.Contains(domain, "://") {
+		u, err := url.Parse(domain)
+		if err == nil {
+			host = u.Host
+			protocol = u.Scheme
+		}
 	} else {
-		host = u.Host
+		host = domain
+	}
+	if host == "" {
+		log.Fatal("[sys] invalid proxy domain/host")
+	}
+
+	var envProxy string
+	if protocol == "https" {
+		envProxy = "https://" + host
+	} else {
+		envProxy = "http://" + host
 	}
 
 	// 代理
@@ -57,10 +72,10 @@ func configSet(domain string) {
 	}
 
 	// 环境变量
-	if err = sysutil.ExecCommand("setx", "HTTP_PROXY", host); err != nil {
+	if err = sysutil.ExecCommand("setx", "HTTP_PROXY", envProxy); err != nil {
 		log.Fatalf("[sys] exec command for http_proxy error:%s \n", err.Error())
 	}
-	if err = sysutil.ExecCommand("setx", "HTTPS_PROXY", host); err != nil {
+	if err = sysutil.ExecCommand("setx", "HTTPS_PROXY", envProxy); err != nil {
 		log.Fatalf("[sys] exec command for https_proxy error:%s \n", err.Error())
 	}
 
